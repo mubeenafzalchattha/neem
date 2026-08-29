@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neem</title>
+  <style>
+    :root {
+      --bg: #e9e9e9;
+      --bar: #e8cf6a;
+      --bar-border: #7ca178;
+      --ink: #101218;
+      --accent: #26165f;
+      --danger: #ef4444;
+      --muted: #737b87;
+      --white: #fff;
+      --cream: #fff8de;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      background: transparent;
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    /* ---------------- card shell ---------------- */
+
+    .card {
+      width: 340px;
+      padding: 12px;
+      border-radius: 18px;
+      position: fixed;
+      right: 20px;
+      top: 20px;
+      background: var(--bg);
+      border: 1px solid rgba(16, 18, 24, 0.18);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
+      cursor: grab;
+      user-select: none;
+      transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                  min-height 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-radius 0.28s ease,
+                  padding 0.28s ease;
+      overflow: hidden;
+    }
+
+    .card.dragging { cursor: grabbing; }
+
+    .close {
+      position: absolute;
+      right: 10px;
+      top: 2px;
+      border: 0;
+      background: transparent;
+      font-size: 32px;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    .info-btn {
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      width: 30px;
+      height: 30px;
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      background: #fff6c9;
+      color: var(--accent);
+      font-weight: 900;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .logo {
+      margin: 18px 0 12px;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .logo img {
+      width: 150px;
+      max-width: 70%;
+      height: auto;
+      display: inline-block;
+    }
+
+    /* ---------------- shared bar / row ---------------- */
+
+    .rows { display: grid; gap: 8px; }
+
+    .row {
+      height: 54px;
+      background: var(--bar);
+      border: 2px solid var(--bar-border);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 700;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .row-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .row-label > span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .icon { font-size: 26px; line-height: 1; }
+
+    .row-right {
+      min-width: 62px;
+      text-align: right;
+      font-size: 28px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .switch {
+      font-size: 15px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #4e9968;
+      color: #fff;
+      display: inline-block;
+    }
+
+    .switch.off { background: #9ca3af; }
+
+    .tag {
+      font-size: 13px;
+      font-weight: 800;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      display: inline-block;
+      max-width: 130px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .loader {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 4px solid rgba(0,0,0,0.15);
+      border-top-color: #111;
+      margin-left: auto;
+      animation: spin 800ms linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---------------- big pill buttons ---------------- */
+
+    .pill-btn {
+      display: block;
+      margin: 14px auto 0;
+      width: 100%;
+      height: 62px;
+      border-radius: 38px;
+      border: 5px solid var(--accent);
+      background: var(--bar);
+      color: var(--accent);
+      font-weight: 900;
+      letter-spacing: 4px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 8px 0 rgba(38, 22, 95, 0.24);
+    }
+
+    .pill-btn:active { transform: translateY(3px); box-shadow: 0 5px 0 rgba(38, 22, 95, 0.24); }
+
+    .pill-btn.small {
+      height: 46px;
+      font-size: 16px;
+      letter-spacing: 2px;
+      border-width: 3px;
+      box-shadow: 0 5px 0 rgba(38, 22, 95, 0.2);
+      margin-top: 10px;
+    }
+
+    .pill-btn.ghost {
+      background: transparent;
+      box-shadow: none;
+      border-width: 2px;
+    }
+
+    .start { letter-spacing: 6px; font-size: 30px; height: 66px; width: 180px; }
+
+    .timer-pill {
+      margin-top: 14px;
+      height: 54px;
+      border-radius: 30px;
+      background: var(--bar);
+      border: 3px solid var(--bar-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 34px;
+      font-weight: 800;
+      color: #ef7b61;
+      letter-spacing: 2px;
+    }
+
+    .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+    }
+
+    .status {
+      margin-top: 8px;
+      min-height: 22px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0 4px;
+    }
+
+    /* ---------------- views ---------------- */
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ---------------- home ---------------- */
+
+    .home-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 4px 10px;
+    }
+
+    .home-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+
+    .home-count {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .home-list {
+      display: grid;
+      gap: 8px;
+      max-height: 264px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 2px 4px 2px 2px;
+      scrollbar-width: thin;
+    }
+
+    .home-list::-webkit-scrollbar { width: 6px; }
+    .home-list::-webkit-scrollbar-thumb {
+      background: rgba(38, 22, 95, 0.28);
+      border-radius: 999px;
+    }
+
+    .rec-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bar);
+      border: 2px solid var(--bar-border);
+      border-radius: 18px;
+      padding: 7px 9px;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      color: var(--ink);
+      font-family: inherit;
+    }
+
+    .rec-item:hover { background: #efd97e; }
+
+    .rec-thumb {
+      width: 62px;
+      height: 40px;
+      border-radius: 10px;
+      background: #cbd5e1 center/cover no-repeat;
+      flex-shrink: 0;
+      border: 1px solid rgba(16,18,24,0.15);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      overflow: hidden;
+    }
+
+    .rec-meta { flex: 1; min-width: 0; }
+
+    .rec-name {
+      font-size: 13px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rec-sub {
+      font-size: 11px;
+      font-weight: 600;
+      color: #4b5563;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rec-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+    .rec-action {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1.5px solid var(--accent);
+      background: #fff6c9;
+      cursor: pointer;
+      font-size: 12px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .rec-action:hover { background: #fdf2aa; }
+
+    .empty-state {
+      text-align: center;
+      padding: 22px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--cream);
+      border: 2px dashed var(--bar-border);
+      border-radius: 18px;
+    }
+
+    .empty-state strong { display: block; font-size: 15px; color: var(--accent); margin-bottom: 4px; }
+
+    .folder-link {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      background: none;
+      border: 0;
+      color: var(--accent);
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      font-family: inherit;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ---------------- back link ---------------- */
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 0;
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 0 0 8px 4px;
+      font-family: inherit;
+    }
+
+    /* ---------------- camera bubble ---------------- */
+
+    .camera-bubble {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      width: 138px;
+      height: 138px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+      display: none;
+      background: #d1d5db;
+      z-index: 30;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .camera-bubble.dragging { cursor: grabbing; }
+
+    .camera-bubble video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .hidden-preview {
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      position: fixed;
+      top: -10px;
+      left: -10px;
+    }
+
+    /* ---------------- overlays ---------------- */
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 18, 24, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+      padding: 18px;
+    }
+
+    .overlay.open { display: flex; }
+
+    .modal {
+      width: min(760px, 94vw);
+      max-height: 84vh;
+      overflow: auto;
+      background: var(--cream);
+      border: 2px solid var(--bar-border);
+      border-radius: 18px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+      padding: 16px;
+    }
+
+    .modal-title {
+      margin: 0 0 4px;
+      font-size: 21px;
+      color: var(--accent);
+    }
+
+    .modal-sub {
+      margin: 0 0 14px;
+      font-size: 13px;
+      color: #4b5563;
+      font-weight: 600;
+    }
+
+    .info-text {
+      margin: 0 0 10px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #1f2937;
+    }
+
+    .info-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+
+    .info-pill {
+      border: 2px solid var(--accent);
+      background: #fdf2aa;
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .info-pill:hover { background: #fbe98a; }
+
+    .modal-close {
+      margin-top: 14px;
+      border: 0;
+      background: #111827;
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    kbd {
+      background: #fff;
+      border: 1px solid #9ca3af;
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 700;
+    }
+
+    /* ---------------- source picker ---------------- */
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+
+    .tab {
+      border: 2px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .tab.active { background: var(--accent); color: #fff; }
+
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+      gap: 10px;
+      max-height: 46vh;
+      overflow-y: auto;
+      padding: 2px;
+    }
+
+    .source-card {
+      border: 2px solid var(--bar-border);
+      background: #fff;
+      border-radius: 14px;
+      padding: 6px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      display: block;
+      width: 100%;
+    }
+
+    .source-card:hover { border-color: var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
+
+    .source-card.selected { border-color: var(--accent); background: #fdf2aa; }
+
+    .source-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      border-radius: 9px;
+      background: #e5e7eb center/contain no-repeat;
+      margin-bottom: 6px;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+    }
+
+    .source-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1f2937;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .source-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 24px 0;
+      font-weight: 600;
+    }
+
+    /* ---------------- region selector ---------------- */
+
+    .region-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      cursor: crosshair;
+      background: rgba(16, 18, 24, 0.32);
+    }
+
+    .region-layer.open { display: block; }
+    .region-layer.drawing { background: transparent; }
+
+    .region-box {
+      position: absolute;
+      border: 2px solid #e8cf6a;
+      background: rgba(232, 207, 106, 0.14);
+      box-shadow: 0 0 0 100vmax rgba(16, 18, 24, 0.42);
+      pointer-events: none;
+      border-radius: 4px;
+    }
+
+    .region-size {
+      position: absolute;
+      transform: translate(-50%, -140%);
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 999px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .region-hint {
+      position: fixed;
+      left: 50%;
+      top: 28px;
+      transform: translateX(-50%);
+      background: var(--cream);
+      border: 2px solid var(--bar-border);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+      padding: 9px 18px;
+      border-radius: 999px;
+      pointer-events: none;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+    }
+
+    /* ---------------- mini tile mode ---------------- */
+
+    .card.mini {
+      width: 360px;
+      min-height: 64px;
+      height: 64px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 32px;
+      background: var(--bg);
+      border: 2px solid var(--bar-border);
+    }
+
+    .card.mini .logo {
+      margin: 0;
+      width: 58px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card.mini .logo img { width: 52px; max-width: 100%; }
+
+    .card.mini .view,
+    .card.mini .status,
+    .card.mini .close,
+    .card.mini .info-btn { display: none !important; }
+
+    .card.mini .mini-bar { display: flex; }
+
+    .mini-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .mini-timer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 26px;
+      font-weight: 800;
+      color: #ef7b61;
+      letter-spacing: 1px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .mini-timer .dot { width: 10px; height: 10px; }
+
+    .mini-controls { display: flex; gap: 6px; }
+
+    .mini-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: var(--bar);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 0;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .mini-btn:hover { background: #fdf2aa; transform: scale(1.05); }
+
+    .mini-btn.active { background: var(--accent); color: #fff; }
+
+    .mini-btn.stop { background: var(--danger); border-color: #b91c1c; color: #fff; }
+    .mini-btn.stop:hover { background: #dc2626; transform: scale(1.05); }
+  </style>
+</head>
+<body>
+  <div id="cameraBubble" class="camera-bubble">
+    <video id="cameraPreview" autoplay muted playsinline></video>
+  </div>
+
+  <main class="card" id="recorderView">
+    <button id="infoBtn" class="info-btn" title="How to use">i</button>
+    <button id="closeBtn" class="close" title="Close">&times;</button>
+
+    <div class="logo">
+      <img src="./neemlogo.png" alt="Neem" />
+    </div>
+
+    <!-- ============ HOME ============ -->
+    <section id="homeView" class="view active">
+      <div class="home-head">
+        <h2 class="home-title">Your recordings</h2>
+        <span id="homeCount" class="home-count"></span>
+      </div>
+
+      <div id="recordingList" class="home-list"></div>
+
+      <button id="newRecordingBtn" class="pill-btn">NEW&nbsp;RECORDING</button>
+      <button id="openFolderBtn" class="folder-link" type="button">Open recordings folder</button>
+    </section>
+
+    <!-- ============ RECORDER ============ -->
+    <section id="setupView" class="view">
+      <button id="backHomeBtn" class="back-link" type="button">&#8592; Home</button>
+
+      <div class="rows">
+        <div class="row" id="captureItem" title="Choose what to record">
+          <div class="row-label"><span class="icon">&#127916;</span><span>Capture</span></div>
+          <div id="captureRight" class="row-right"><span class="tag">Full screen</span></div>
+        </div>
+
+        <div class="row" id="zoomItem" title="Zoom that follows your cursor">
+          <div class="row-label"><span class="icon">&#128269;</span><span>Cursor zoom</span></div>
+          <div id="zoomRight" class="row-right"><span class="switch">On</span></div>
+        </div>
+
+        <div class="row" id="cameraItem">
+          <div class="row-label"><span class="icon">&#128248;</span><span>Camera</span></div>
+          <div id="cameraRight" class="row-right"><span class="switch">On</span></div>
+        </div>
+
+        <div class="row" id="microphoneItem">
+          <div class="row-label"><span class="icon">&#127908;</span><span>Microphone</span></div>
+          <div id="microphoneRight" class="row-right"><span class="switch">On</span></div>
+        </div>
+      </div>
+
+      <button id="recordBtn" class="pill-btn start">START</button>
+
+      <div class="timer-pill">
+        <span class="dot"></span>
+        <span id="liveTimer">00:00</span>
+      </div>
+
+    </section>
+
+    <div id="status" class="status">Ready</div>
+
+    <!-- ============ MINI (recording) ============ -->
+    <div class="mini-bar">
+      <div class="mini-timer">
+        <span class="dot"></span>
+        <span id="miniTimer">00:00</span>
+      </div>
+      <div class="mini-controls">
+        <button id="miniZoomOutBtn" class="mini-btn" title="Zoom out (Cmd+Shift+X)">&minus;</button>
+        <button id="miniZoomInBtn" class="mini-btn" title="Zoom in (Cmd+Shift+Z)">+</button>
+        <button id="miniPauseBtn" class="mini-btn" title="Pause / resume (Cmd+Shift+P)">&#9208;</button>
+        <button id="miniStopBtn" class="mini-btn stop" title="Stop (Cmd+Shift+S)">&#9632;</button>
+      </div>
+    </div>
+  </main>
+
+  <video id="sourceVideo" class="hidden-preview" autoplay muted playsinline></video>
+  <canvas id="composer" class="hidden-preview"></canvas>
+
+  <!-- ============ SOURCE PICKER ============ -->
+  <div id="sourceOverlay" class="overlay" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="sourceTitle">
+      <h3 id="sourceTitle" class="modal-title">What should Neem record?</h3>
+      <p class="modal-sub">Pick a whole display, a single app window, or drag out a custom region.</p>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="screens" type="button">Displays</button>
+        <button class="tab" data-tab="windows" type="button">Windows</button>
+        <button class="tab" data-tab="region" type="button">Custom region</button>
+      </div>
+
+      <div id="sourceGrid" class="source-grid"></div>
+
+      <div id="regionPane" style="display:none">
+        <p class="info-text">Drag a box anywhere on screen to set the recording area. Neem records only what is inside that box.</p>
+        <button id="startRegionBtn" class="info-pill" type="button">Select region on screen</button>
+      </div>
+
+      <button id="closeSourceBtn" class="modal-close" type="button">Close</button>
+    </section>
+  </div>
+
+  <!-- ============ REGION SELECTOR ============ -->
+  <div id="regionLayer" class="region-layer">
+    <div class="region-hint">Drag to select the recording area &nbsp;&middot;&nbsp; <kbd>Esc</kbd> to cancel</div>
+    <div id="regionBox" class="region-box" style="display:none"></div>
+    <div id="regionSize" class="region-size" style="display:none"></div>
+  </div>
+
+  <!-- ============ INFO ============ -->
+  <div id="infoOverlay" class="overlay" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+      <h3 id="infoTitle" class="modal-title">Neem Quick Help</h3>
+
+      <p class="info-text"><strong>Recordings</strong> are saved automatically as MP4 to <strong>Movies &rsaquo; Neem</strong> and listed on the home screen.</p>
+
+      <p class="info-text"><strong>Capture area:</strong> use the <em>Capture</em> row to record a whole display, one app window, or a custom region you drag out.</p>
+
+      <p class="info-text"><strong>Cursor zoom:</strong> when it is on, Neem eases into a close-up around your pointer when you settle on something, then eases back out. Shortcuts while recording:
+        <kbd>&#8984;&#8679;Z</kbd> zoom in &middot;
+        <kbd>&#8984;&#8679;X</kbd> zoom out &middot;
+        <kbd>&#8984;&#8679;P</kbd> pause &middot;
+        <kbd>&#8984;&#8679;S</kbd> stop.
+      </p>
+
+      <p class="info-text"><strong>Permissions (macOS):</strong> System Settings &rsaquo; Privacy &amp; Security &rsaquo; allow Neem for Screen Recording, Camera and Microphone.</p>
+
+      <div class="info-actions">
+        <button id="openScreenSettingsBtn" class="info-pill" type="button">Open Screen Settings</button>
+        <button id="openCameraSettingsBtn" class="info-pill" type="button">Open Camera Settings</button>
+        <button id="openMicSettingsBtn" class="info-pill" type="button">Open Microphone Settings</button>
+      </div>
+
+      <p class="info-text" style="margin-top:12px"><strong>&ldquo;Neem is damaged / cannot be opened&rdquo;?</strong> That is macOS Gatekeeper, not a broken download. In Terminal run:<br>
+        <kbd>xattr -cr /Applications/Neem.app</kbd><br>then reopen the app.</p>
+
+      <button id="closeInfoBtn" class="modal-close" type="button">Close</button>
+    </section>
+  </div>
+
+  <script src="./renderer.js"></script>
+</body>
+</html>

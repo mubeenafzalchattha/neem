@@ -1,0 +1,75 @@
+{
+  "name": "recodingapp",
+  "version": "1.1.0",
+  "description": "Desktop recorder for screen, window or region with cursor zoom, camera and microphone",
+  "productName": "Neem",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "icon:mac": "bash scripts/make-mac-icon.sh",
+    "icon:build": "bash scripts/make-build-icon.sh",
+    "pack:mac": "npm run icon:build && electron-builder --mac dir",
+    "build:mac": "npm run icon:build && electron-builder --mac dmg",
+    "fix:quarantine": "bash scripts/fix-quarantine.sh",
+    "install:mac": "bash -lc 'APP_PATH=$(find dist -maxdepth 2 -name \"Neem.app\" | head -n 1); if [ -z \"$APP_PATH\" ]; then echo \"Build app not found in dist.\"; exit 1; fi; rm -rf /Applications/Neem.app; cp -R \"$APP_PATH\" /Applications/; xattr -cr /Applications/Neem.app; codesign --force --deep --sign - /Applications/Neem.app; echo \"Installed and ad-hoc signed /Applications/Neem.app\"'",
+    "resign:dev": "codesign --force --deep --sign - node_modules/electron/dist/Electron.app && echo 'Electron.app re-signed ad-hoc'",
+    "reinstall:electron": "rm -rf node_modules/electron && npm install && npm run resign:dev"
+  },
+  "devDependencies": {
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0"
+  },
+  "build": {
+    "appId": "com.neem.recorder",
+    "productName": "Neem",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "src/main.js"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icons/logo-build.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSCameraUsageDescription": "Neem records your camera as an optional bubble in your screen recordings.",
+        "NSMicrophoneUsageDescription": "Neem records your microphone as the voiceover track of your screen recordings.",
+        "NSDesktopFolderUsageDescription": "Neem saves finished recordings to your Movies folder.",
+        "NSAppleEventsUsageDescription": "Neem opens finished recordings in Finder."
+      }
+    },
+    "dmg": {
+      "sign": false
+    }
+  }
+}
